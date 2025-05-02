@@ -35,7 +35,7 @@ int main() {
 	uint8_t rx_char = 0;
 	char buff[BUFF_SIZE]; // The UART read string will be stored here
 	uint32_t buff_index;
-	char diplay_message[50];
+	char display_message[50];
 	
 	// Initialize the receive queue and UART
 	queue_init(&rx_queue, 128);
@@ -53,8 +53,7 @@ int main() {
 	timer_enable();
 	
 	// Set GPIO mode
-	gpio_set_mode(P_LED_B, Output); // Set onboard LED pin to output
-	// gpio_set_mode(P_SW, PullUp); // Switch pin to resistive pull-up
+	gpio_set_mode(P_LED_R, Output); // Set onboard LED pin to output
 	
 	while(1) {
 
@@ -99,13 +98,13 @@ int main() {
 				}
 				
 				if (buff[cnt] % 2) {
-					gpio_set(P_LED_B, 1);
-					sprintf(diplay_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
+					gpio_set(P_LED_R, LED_ON);
+					sprintf(display_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
 				} else {
-					gpio_set(P_LED_B, 0);
-					sprintf(diplay_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
+					gpio_set(P_LED_R, LED_OFF);
+					sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
 				}
-				uart_print(diplay_message);
+				uart_print(display_message);
 				ti_flag = 0;
 				cnt++;
 			} else {
