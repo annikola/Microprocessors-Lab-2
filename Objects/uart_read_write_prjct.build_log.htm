@@ -21,16 +21,62 @@ Target DLL:      STLink\ST-LINKIII-KEIL_SWO.dll V3.3.0.0
 Dialog DLL:      TCM.DLL V1.56.6.0
  
 <h2>Project:</h2>
-C:\Users\30690\Downloads\uart_read_write_prjct\uart_read_write_prjct.uvprojx
-Project File Date:  04/03/2025
+C:\Users\30690\Downloads\Microprocessors-Lab-2\uart_read_write_prjct.uvprojx
+Project File Date:  04/26/2025
 
 <h2>Output:</h2>
 *** Using Compiler 'V6.23', folder: 'C:\Users\30690\AppData\Local\Keil_v5\ARM\ARMCLANG\Bin'
 Build target 'Target 1'
+compiling stm32f4xx_gpio.c...
+compiling stm32f4xx_adc.c...
+compiling leds.c...
+compiling gpio.c...
+compiling queue.c...
 compiling main.c...
+drivers/comparator.c(2): warning: In file included from...
+drivers\comparator.h(6): warning: In file included from...
+drivers\adc.h(10): warning: 'ADC1_BASE' macro redefined [-Wmacro-redefined]
+   10 | #define ADC1_BASE             (APB2PERIPH_BASE + 0x2000)
+      |         ^
+C:/Users/30690/AppData/Local/arm/packs/Keil/STM32F4xx_DFP/2.17.1/Drivers/CMSIS/Device/ST/STM32F4xx/Include\stm32f411xe.h(678): note: previous definition is here
+  678 | #define ADC1_BASE             (APB2PERIPH_BASE + 0x2000UL)
+      |         ^
+drivers/comparator.c(2): warning: In file included from...
+drivers\comparator.h(6): warning: In file included from...
+drivers\adc.h(23): warning: 'GPIOA_BASE' macro redefined [-Wmacro-redefined]
+   23 | #define GPIOA_BASE            (AHB1PERIPH_BASE + 0x0000)
+      |         ^
+C:/Users/30690/AppData/Local/arm/packs/Keil/STM32F4xx_DFP/2.17.1/Drivers/CMSIS/Device/ST/STM32F4xx/Include\stm32f411xe.h(693): note: previous definition is here
+  693 | #define GPIOA_BASE            (AHB1PERIPH_BASE + 0x0000UL)
+      |         ^
+2 warnings generated.
+compiling comparator.c...
+compiling i2c.c...
+drivers/adc.c(3): warning: In file included from...
+drivers\adc.h(10): warning: 'ADC1_BASE' macro redefined [-Wmacro-redefined]
+   10 | #define ADC1_BASE             (APB2PERIPH_BASE + 0x2000)
+      |         ^
+C:/Users/30690/AppData/Local/arm/packs/Keil/STM32F4xx_DFP/2.17.1/Drivers/CMSIS/Device/ST/STM32F4xx/Include\stm32f411xe.h(678): note: previous definition is here
+  678 | #define ADC1_BASE             (APB2PERIPH_BASE + 0x2000UL)
+      |         ^
+drivers/adc.c(3): warning: In file included from...
+drivers\adc.h(23): warning: 'GPIOA_BASE' macro redefined [-Wmacro-redefined]
+   23 | #define GPIOA_BASE            (AHB1PERIPH_BASE + 0x0000)
+      |         ^
+C:/Users/30690/AppData/Local/arm/packs/Keil/STM32F4xx_DFP/2.17.1/Drivers/CMSIS/Device/ST/STM32F4xx/Include\stm32f411xe.h(693): note: previous definition is here
+  693 | #define GPIOA_BASE            (AHB1PERIPH_BASE + 0x0000UL)
+      |         ^
+2 warnings generated.
+compiling adc.c...
+compiling stm32f4xx_rcc.c...
+compiling stm32f4xx_i2c.c...
+compiling timer.c...
+compiling stm32f4xx_usart.c...
+compiling delay.c...
+compiling uart.c...
 linking...
-Program Size: Code=4460 RO-data=516 RW-data=0 ZI-data=1672  
-".\Objects\uart_read_write_prjct.axf" - 0 Error(s), 0 Warning(s).
+Program Size: Code=13072 RO-data=1148 RW-data=4 ZI-data=1680  
+".\Objects\uart_read_write_prjct.axf" - 0 Error(s), 4 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -57,11 +103,11 @@ Package Vendor: Keil
 
    * Component: Keil::Device:Startup@2.6.3
       Source file:   MDK/Device/Source/ARM/STM32F411xx_OPT.s
-      Source file:   MDK/Device/Source/ARM/STM32F4xx_OTP.s
       Include file:  Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f4xx.h
+      Source file:   MDK/Device/Source/ARM/STM32F4xx_OTP.s
       Source file:   Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/arm/startup_stm32f411xe.s
       Source file:   Drivers/CMSIS/Device/ST/STM32F4xx/Source/Templates/system_stm32f4xx.c
-Build Time Elapsed:  00:00:01
+Build Time Elapsed:  00:00:02
 </pre>
 </body>
 </html>
