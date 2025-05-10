@@ -11,6 +11,9 @@
 #define BUFF_SIZE 128 //read buffer length
 
 Queue rx_queue; // Queue for storing received characters
+char buff[BUFF_SIZE]; // The UART read string will be stored here
+char display_message[50];
+int cnt = 0;
 int ti_flag = 0;
 int frozen = 0;
 
@@ -23,18 +26,73 @@ void uart_rx_isr(uint8_t rx) {
 	}
 }
 
-void digit_timer_isr() {
-	ti_flag = 1;
+void SysTick_Handler(char *buff, int cnt) {
+	if (buff[cnt] == '-') {
+		cnt = 0;
+	}
+	
+	if (buff[cnt] % 2) {
+		if (!frozen) {
+			NVIC_DisableIRQ(TIM2_IRQn);
+			gpio_toggle(P_LED_R);
+		}
+		sprintf(display_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
+	} else {
+			if (!frozen) {
+				NVIC_EnableIRQ(TIM2_IRQn);
+				TIM2->CR1 |= TIM_CR1_CEN;	// Start TIM2
+			}
+		sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
+	}
+	uart_print(display_message);
+	ti_flag = 0;
+	cnt++;
+	
 }
+
+/*
+void digit_timer_isr(char *buff, int cnt) {
+	if (buff[cnt] == '-') {
+		cnt = 0;
+	}
+	
+	if (buff[cnt] % 2) {
+		if (!frozen) {
+			NVIC_DisableIRQ(TIM2_IRQn);
+			gpio_toggle(P_LED_R);
+		}
+		sprintf(display_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
+	} else {
+			if (!frozen) {
+				NVIC_EnableIRQ(TIM2_IRQn);
+				TIM2->CR1 |= TIM_CR1_CEN;	// Start TIM2
+			}
+		sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
+	}
+	uart_print(display_message);
+	ti_flag = 0;
+	cnt++;
+}
+*/
 
 void TIM2_IRQHandler(void) {
 	if (TIM2->SR & TIM_SR_UIF) {	// Check if update interrupt flag is set
 		TIM2->SR &= ~TIM_SR_UIF;		// ? Clear the flag immediately
-
-		// Your custom logic here — e.g. toggle LED, set flags
 		gpio_toggle(P_LED_R);
 	}
 }
+
+/*
+void EXTI15_10_IRQHandler(void)
+{
+    // Clear pending interrupt flag (if not done by HAL)
+    if (EXTI->PR & EXTI_PR_PR13) {
+        EXTI->PR |= EXTI_PR_PR13;  // Clear interrupt flag
+
+        frozen = 1;
+    }
+}
+*/
 
 
 int main() {
@@ -43,9 +101,8 @@ int main() {
 		
 	// Variables to help with UART read / write
 	uint8_t rx_char = 0;
-	char buff[BUFF_SIZE]; // The UART read string will be stored here
+	// char buff[BUFF_SIZE]; // The UART read string will be stored here
 	uint32_t buff_index;
-	char display_message[50];
 	
 	// Initialize the receive queue and UART
 	queue_init(&rx_queue, 128);
@@ -58,9 +115,9 @@ int main() {
 	uart_print("\r\n");// Print newline
 	
 	// Initialize the digit interrupt timer
-	timer_init(1000000);
-	timer_set_callback(digit_timer_isr);
-	timer_enable();
+	// timer_init(1000000);
+	// timer_set_callback(digit_timer_isr);
+	// timer_enable();
 	
 	// Initialize the led interrupt timer
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  // Enable clock for TIM2
@@ -108,37 +165,13 @@ int main() {
 		
 		// Main code
 		int cnt = 0;
+		timer_init(1000000);
+		timer_enable();
 		do {
 			
 			__WFI(); // Wait for Interrupt
 			
-			if (!gpio_get(P_SW)) {
-				NVIC_DisableIRQ(TIM2_IRQn);
-				frozen = 1;
-			}
-			
-			if (ti_flag) {
-				if (buff[cnt] == '-') {
-					cnt = 0;
-				}
-				
-				if (buff[cnt] % 2) {
-					if (!frozen) {
-						NVIC_DisableIRQ(TIM2_IRQn);
-						gpio_toggle(P_LED_R);
-					}
-					sprintf(display_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
-				} else {
-						if (!frozen) {
-							NVIC_EnableIRQ(TIM2_IRQn);
-							TIM2->CR1 |= TIM_CR1_CEN;	// Start TIM2
-						}
-					sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
-				}
-				uart_print(display_message);
-				ti_flag = 0;
-				cnt++;
-			} else if (!queue_is_empty(&rx_queue)) {
+			if (!queue_is_empty(&rx_queue)) {
 				NVIC_DisableIRQ(TIM2_IRQn);
 				uart_print("...\r\n(New input received)\r\n");
 				break;
