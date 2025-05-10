@@ -12,7 +12,7 @@
 
 Queue rx_queue; // Queue for storing received characters
 int ti_flag = 0;
-int blink_flag = 0;
+int frozen = 0;
 
 // Interrupt Service Routine for UART receive
 void uart_rx_isr(uint8_t rx) {
@@ -32,11 +32,7 @@ void TIM2_IRQHandler(void) {
 		TIM2->SR &= ~TIM_SR_UIF;		// ? Clear the flag immediately
 
 		// Your custom logic here — e.g. toggle LED, set flags
-		if (gpio_get(P_LED_R)) {
-			gpio_set(P_LED_R, 0);
-		} else {
-			gpio_set(P_LED_R, 1);
-		}
+		gpio_toggle(P_LED_R);
 	}
 }
 
@@ -62,19 +58,20 @@ int main() {
 	uart_print("\r\n");// Print newline
 	
 	// Initialize the digit interrupt timer
-	timer_init(2000000);
+	timer_init(1000000);
 	timer_set_callback(digit_timer_isr);
 	timer_enable();
 	
 	// Initialize the led interrupt timer
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  // Enable clock for TIM2
 	TIM2->PSC = 15999;  // Prescaler: divide 16 MHz by 16000 = 1 kHz
-	TIM2->ARR = 499;   // Auto-reload: 200 ticks at 1 kHz = 200 ms
+	TIM2->ARR = 199;   // Auto-reload: 200 ticks at 1 kHz = 200 ms
 	TIM2->DIER |= TIM_DIER_UIE;  // Enable update interrupt (overflow interrupt)
 	NVIC_SetPriority(TIM2_IRQn, 1);
 	
 	// Set GPIO mode
 	gpio_set_mode(P_LED_R, Output); // Set onboard LED pin to output
+	gpio_set_mode(P_SW, PullUp); // Switch pin to resistive pull-up
 	gpio_set(P_LED_R, LED_OFF);
 	
 	while(1) {
@@ -115,31 +112,41 @@ int main() {
 			
 			__WFI(); // Wait for Interrupt
 			
+			if (!gpio_get(P_SW)) {
+				NVIC_DisableIRQ(TIM2_IRQn);
+				frozen = 1;
+			}
+			
 			if (ti_flag) {
 				if (buff[cnt] == '-') {
 					cnt = 0;
 				}
 				
 				if (buff[cnt] % 2) {
-					NVIC_DisableIRQ(TIM2_IRQn);
-					blink_flag = 0;
-					gpio_toggle(P_LED_R);
+					if (!frozen) {
+						NVIC_DisableIRQ(TIM2_IRQn);
+						gpio_toggle(P_LED_R);
+					}
 					sprintf(display_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
 				} else {
-					NVIC_EnableIRQ(TIM2_IRQn);
-					TIM2->CR1 |= TIM_CR1_CEN;	// Start TIM2
-					blink_flag = 1;
+						if (!frozen) {
+							NVIC_EnableIRQ(TIM2_IRQn);
+							TIM2->CR1 |= TIM_CR1_CEN;	// Start TIM2
+						}
 					sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
 				}
 				uart_print(display_message);
 				ti_flag = 0;
 				cnt++;
-			} else if (!blink_flag) {
-					uart_print("...\r\n(New input received)\r\n");
-					break;
+			} else if (!queue_is_empty(&rx_queue)) {
+				NVIC_DisableIRQ(TIM2_IRQn);
+				uart_print("...\r\n(New input received)\r\n");
+				break;
 			}
 			
 		} while (cnt != buff_index - 1); // Continue until Enter key
+		gpio_set(P_LED_R, 0);
+		frozen = 0;
 		uart_print("\r\n"); // Print newline
 	}
 }
