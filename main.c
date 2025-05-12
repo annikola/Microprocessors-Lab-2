@@ -69,7 +69,7 @@ void freeze(int status) {
 	button_press_count++;
 	if (!input_phase) {
 		NVIC_DisableIRQ(TIM2_IRQn);
-		frozen = 1;
+		frozen = !frozen;
 		sprintf(display_message, "Interrupt: Button pressed. LED locked. Count = %d\r\n", button_press_count);
 		uart_print(display_message);
 	}
