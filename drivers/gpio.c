@@ -338,7 +338,6 @@ void EXTI9_5_IRQHandler(void){
 	}
 }
 
-
 void EXTI15_10_IRQHandler(void){
 	
 	GPIO_TypeDef* p = ((GPIO_TypeDef*)(AHB1PERIPH_BASE + 0x0400 * IRQ_port_num));
@@ -346,10 +345,13 @@ void EXTI15_10_IRQHandler(void){
 	NVIC_ClearPendingIRQ(EXTI15_10_IRQn);
 	EXTI->PR|=(1<<IRQ_pin_index);
 	
-	if(p->IDR&(1<<IRQ_pin_index)){
-		GPIO_callback(IRQ_pin_index);
-	}
+	GPIO_callback(IRQ_pin_index); // No check is needed, since we are using a Falling Edge trigger...
+	
+	// if(!(p->IDR&(1<<IRQ_pin_index))){
+	// 	GPIO_callback(IRQ_pin_index);
+	// }
 	
 }
+
 
 // *******************************ARM University Program Copyright © ARM Ltd 2016*************************************

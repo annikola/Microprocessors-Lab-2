@@ -70,7 +70,7 @@ void uart_set_rx_callback(void (*callback)(uint8_t)) {
 	
 	//Enable the USART interrupt
 	__enable_irq();
-	NVIC_SetPriority(USART2_IRQn,0);
+	NVIC_SetPriority(USART2_IRQn,4); // We set this in order for the button press to have higher priority
 	NVIC_ClearPendingIRQ(USART2_IRQn);
 	NVIC_EnableIRQ(USART2_IRQn);
 }

@@ -14,6 +14,8 @@ Queue rx_queue; // Queue for storing received characters
 char buff[BUFF_SIZE]; // The UART read string will be stored here
 int cnt = 0;
 int frozen = 0;
+int input_phase = 1;
+unsigned int button_press_count = 0;
 
 // Interrupt Service Routine for UART receive
 void uart_rx_isr(uint8_t rx) {
@@ -26,7 +28,7 @@ void uart_rx_isr(uint8_t rx) {
 
 void digit_timer_isr() {
 	
-	char display_message[50];
+	char display_message[32];
 	
 	if (buff[cnt] == '-') {
 		cnt = 0;
@@ -34,16 +36,21 @@ void digit_timer_isr() {
 	
 	if (buff[cnt] % 2) {
 		if (!frozen) {
+			NVIC_ClearPendingIRQ(TIM2_IRQn);
 			NVIC_DisableIRQ(TIM2_IRQn);
 			gpio_toggle(P_LED_R);
-		}
-		sprintf(display_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
+			sprintf(display_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
+		} else {
+			sprintf(display_message, "Digit %c -> Skipped LED action\r\n", buff[cnt]);
+		}	
 	} else {
-			if (!frozen) {
-				NVIC_EnableIRQ(TIM2_IRQn);
-				TIM2->CR1 |= TIM_CR1_CEN;	// Start TIM2
-			}
-		sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
+		if (!frozen) {
+			NVIC_EnableIRQ(TIM2_IRQn);
+			TIM2->CR1 |= TIM_CR1_CEN;	// Start TIM2
+			sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
+		} else {
+			sprintf(display_message, "Digit %c -> Skipped LED action\r\n", buff[cnt]);
+		}
 	}
 	uart_print(display_message);
 	cnt++;
@@ -51,22 +58,22 @@ void digit_timer_isr() {
 
 void TIM2_IRQHandler(void) {
 	if (TIM2->SR & TIM_SR_UIF) {	// Check if update interrupt flag is set
-		TIM2->SR &= ~TIM_SR_UIF;		// ? Clear the flag immediately
+		TIM2->SR &= ~TIM_SR_UIF;		// Clear the flag immediately
 		gpio_toggle(P_LED_R);
 	}
 }
 
-/*
-void EXTI15_10_IRQHandler(void)
-{
-    // Clear pending interrupt flag (if not done by HAL)
-    if (EXTI->PR & EXTI_PR_PR13) {
-        EXTI->PR |= EXTI_PR_PR13;  // Clear interrupt flag
-
-        frozen = 1;
-    }
+void freeze(int status) {
+	char display_message[60];
+	
+	button_press_count++;
+	if (!input_phase) {
+		NVIC_DisableIRQ(TIM2_IRQn);
+		frozen = 1;
+		sprintf(display_message, "Interrupt: Button pressed. LED locked. Count = %d\r\n", button_press_count);
+		uart_print(display_message);
+	}
 }
-*/
 
 
 int main() {
@@ -94,10 +101,14 @@ int main() {
 	TIM2->DIER |= TIM_DIER_UIE;  // Enable update interrupt (overflow interrupt)
 	NVIC_SetPriority(TIM2_IRQn, 1);
 	
-	// Set GPIO mode
+	// Initialize LEDs
 	gpio_set_mode(P_LED_R, Output); // Set onboard LED pin to output
-	gpio_set_mode(P_SW, PullUp); // Switch pin to resistive pull-up
 	gpio_set(P_LED_R, LED_OFF);
+	
+	// Initialize the Push Button (User Button)
+	gpio_set_mode(P_SW, PullUp); // Switch pin to resistive pull-up
+	gpio_set_trigger(P_SW, Falling);
+	gpio_set_callback(P_SW, freeze); // Set the Push Button ISR function
 	
 	while(1) {
 
@@ -132,8 +143,9 @@ int main() {
 		}
 		
 		// Sequence processing
+		input_phase = 0;
 		cnt = 0;
-		timer_init(500000);
+		timer_init(1000000);
 		timer_set_callback(digit_timer_isr);
 		timer_enable();
 		do {
@@ -150,6 +162,9 @@ int main() {
 		timer_disable();
 		gpio_set(P_LED_R, 0);
 		frozen = 0;
-		uart_print("\r\n"); // Print newline
+		input_phase = 1;
+		if (cnt == buff_index - 1) {
+			uart_print("End of sequence. Waiting for new number...\r\n");
+		}
 	}
 }
