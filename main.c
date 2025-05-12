@@ -148,7 +148,7 @@ int main() {
 		timer_init(500000);
 		timer_set_callback(digit_timer_isr);
 		timer_enable();
-		do {
+		while (cnt != buff_index - 1) {
 			
 			__WFI(); // Wait for Interrupt
 			
@@ -156,8 +156,7 @@ int main() {
 				uart_print("...\r\n(New input received)\r\n");
 				break;
 			}
-			
-		} while (cnt != buff_index - 1);
+		}
 		NVIC_DisableIRQ(TIM2_IRQn);
 		timer_disable();
 		gpio_set(P_LED_R, 0);
