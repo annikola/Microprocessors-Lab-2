@@ -3,7 +3,7 @@
 
 uint32_t timer_period;
 
-static void (*timer_callback)(char *buff, int cnt) = 0;
+static void (*timer_callback)(void) = 0;
 
 void timer_init(uint32_t timestamp) {
 
@@ -29,7 +29,7 @@ void timer_disable(void) {
 	SysTick->CTRL  &= ~SysTick_CTRL_ENABLE_Msk;
 }
 
-void timer_set_callback(void (*callback)(char *buff, int cnt)) {
+void timer_set_callback(void (*callback)(void)) {
 	// Set up and enable the interrupt.
 
 	// The callback function should be stored in an internal
@@ -42,11 +42,9 @@ void timer_set_callback(void (*callback)(char *buff, int cnt)) {
 
 }
 
-/*
 void SysTick_Handler(void)
 {
 	timer_callback();
 }
-*/
 
 // *******************************ARM University Program Copyright � ARM Ltd 2016*************************************

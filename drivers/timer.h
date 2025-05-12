@@ -18,7 +18,7 @@ void timer_init(uint32_t timestamp);
  *         interrupt handler.
  *  \param callback  Callback function.
  */
-void timer_set_callback(void (*callback)(char *buff, int cnt));
+void timer_set_callback(void (*callback)(void));
 
 /*! \brief Enables the timer operation. */
 void timer_enable(void);

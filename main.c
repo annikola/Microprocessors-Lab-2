@@ -12,9 +12,7 @@
 
 Queue rx_queue; // Queue for storing received characters
 char buff[BUFF_SIZE]; // The UART read string will be stored here
-char display_message[50];
 int cnt = 0;
-int ti_flag = 0;
 int frozen = 0;
 
 // Interrupt Service Routine for UART receive
@@ -26,7 +24,10 @@ void uart_rx_isr(uint8_t rx) {
 	}
 }
 
-void SysTick_Handler(char *buff, int cnt) {
+void digit_timer_isr() {
+	
+	char display_message[50];
+	
 	if (buff[cnt] == '-') {
 		cnt = 0;
 	}
@@ -45,35 +46,8 @@ void SysTick_Handler(char *buff, int cnt) {
 		sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
 	}
 	uart_print(display_message);
-	ti_flag = 0;
-	cnt++;
-	
-}
-
-/*
-void digit_timer_isr(char *buff, int cnt) {
-	if (buff[cnt] == '-') {
-		cnt = 0;
-	}
-	
-	if (buff[cnt] % 2) {
-		if (!frozen) {
-			NVIC_DisableIRQ(TIM2_IRQn);
-			gpio_toggle(P_LED_R);
-		}
-		sprintf(display_message, "Digit %c -> Toggle LED\r\n", buff[cnt]);
-	} else {
-			if (!frozen) {
-				NVIC_EnableIRQ(TIM2_IRQn);
-				TIM2->CR1 |= TIM_CR1_CEN;	// Start TIM2
-			}
-		sprintf(display_message, "Digit %c -> Blink LED\r\n", buff[cnt]);
-	}
-	uart_print(display_message);
-	ti_flag = 0;
 	cnt++;
 }
-*/
 
 void TIM2_IRQHandler(void) {
 	if (TIM2->SR & TIM_SR_UIF) {	// Check if update interrupt flag is set
@@ -101,7 +75,6 @@ int main() {
 		
 	// Variables to help with UART read / write
 	uint8_t rx_char = 0;
-	// char buff[BUFF_SIZE]; // The UART read string will be stored here
 	uint32_t buff_index;
 	
 	// Initialize the receive queue and UART
@@ -113,11 +86,6 @@ int main() {
 	__enable_irq(); // Enable interrupts
 	
 	uart_print("\r\n");// Print newline
-	
-	// Initialize the digit interrupt timer
-	// timer_init(1000000);
-	// timer_set_callback(digit_timer_isr);
-	// timer_enable();
 	
 	// Initialize the led interrupt timer
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;  // Enable clock for TIM2
@@ -133,12 +101,12 @@ int main() {
 	
 	while(1) {
 
-		// Prompt the user to enter their full name
+		// Prompt the user to enter a digit sequence
 		uart_print("Input: ");
 		buff_index = 0; // Reset buffer index
 		
 		do {
-			// Wait until a character is received in the queue
+			// Wait until a digit or dash is received in the queue
 			while (!queue_dequeue(&rx_queue, &rx_char))
 				__WFI(); // Wait for Interrupt
 
@@ -149,8 +117,8 @@ int main() {
 				}
 			} else if ((rx_char >= '0' && rx_char <= '9') || rx_char == '-' || rx_char == '\r') {
 				// Store and echo the received character back
-				buff[buff_index++] = (char)rx_char; // Store character in buffer
-				uart_tx(rx_char); // Echo character back to terminal
+				buff[buff_index++] = (char)rx_char; // Store digit or dash in buffer
+				uart_tx(rx_char); // Echo digit or dash back to terminal
 			}
 		} while (rx_char != '\r' && buff_index < BUFF_SIZE); // Continue until Enter key or buffer full
 		
@@ -163,21 +131,23 @@ int main() {
 			uart_print("Stop trying to overflow my buffer! I resent that!\r\n");
 		}
 		
-		// Main code
-		int cnt = 0;
-		timer_init(1000000);
+		// Sequence processing
+		cnt = 0;
+		timer_init(500000);
+		timer_set_callback(digit_timer_isr);
 		timer_enable();
 		do {
 			
 			__WFI(); // Wait for Interrupt
 			
 			if (!queue_is_empty(&rx_queue)) {
-				NVIC_DisableIRQ(TIM2_IRQn);
 				uart_print("...\r\n(New input received)\r\n");
 				break;
 			}
 			
-		} while (cnt != buff_index - 1); // Continue until Enter key
+		} while (cnt != buff_index - 1);
+		NVIC_DisableIRQ(TIM2_IRQn);
+		timer_disable();
 		gpio_set(P_LED_R, 0);
 		frozen = 0;
 		uart_print("\r\n"); // Print newline
