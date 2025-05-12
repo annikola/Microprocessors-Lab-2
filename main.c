@@ -145,7 +145,7 @@ int main() {
 		// Sequence processing
 		input_phase = 0;
 		cnt = 0;
-		timer_init(1000000);
+		timer_init(500000);
 		timer_set_callback(digit_timer_isr);
 		timer_enable();
 		do {
