@@ -15,7 +15,7 @@ void timer_init(uint32_t timestamp) {
 		uint32_t tick_us = (SystemCoreClock)/1e6;
 		tick_us = tick_us*timestamp;
 		SysTick_Config(tick_us);
-		NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 0));
+		NVIC_SetPriority(SysTick_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), 0, 2));
 
 	}
 

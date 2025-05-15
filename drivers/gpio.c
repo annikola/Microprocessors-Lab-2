@@ -256,7 +256,7 @@ void gpio_set_callback(Pin pin, void (*callback)(int status)) {
 			SYSCFG->EXTICR[3]|= EXTI_port_set;
 			prioritygroup = NVIC_GetPriorityGrouping(); // will return 5
 			priority = NVIC_EncodePriority(prioritygroup, 1, 1 ); // Pri=1 , SubPri=1
-			NVIC_SetPriority(EXTI15_10_IRQn,3);
+			NVIC_SetPriority(EXTI15_10_IRQn,0);
 		  NVIC_EnableIRQ(EXTI15_10_IRQn);
 		break;
 	}
