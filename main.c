@@ -52,7 +52,10 @@ then the keyboard interrupt and then the SysTick and the TIM2.
 This way if the button is pressed, the LED freezes before its state is changed
 and if a key is pressed during the analysis, the analysis stops immediately.
 
-    !! write here files and numbers changed
+Other files that also have changes are:
+	- gpio.c	(lines 259 and 348)
+	- uart.c	(line 73)
+	- timer.c (line 18)
 */
 
 
@@ -232,7 +235,7 @@ int main() {
 		
 		// Sequence processing
 		input_phase = 0;             // exited input stage
-		current_digit = 0;                     // starting to analyse from first character
+		current_digit = 0;           // starting to analyse from first character
 		
 		// initialise character timer (SysTick 0.5 sec period)
 		timer_init(500000);          // 500'000 µs = 0.5 s
@@ -241,7 +244,7 @@ int main() {
 		
 		while (current_digit != buff_index - 1) { 
 			// do until currect character position (current_digit) reaches the end of the buffer
-			// don't acount for the last position as it is \0
+			// don't account for the last position as it is '\0'
 			
 			__WFI(); // Wait for Interrupt
 			
@@ -260,7 +263,7 @@ int main() {
 		frozen = 0;                    // unfreeze
 		input_phase = 1;               // enter input stage
 		
-		if (current_digit == buff_index - 1) {   // !!! problem if the key interrupt happens when the last number is being proccessed 
+		if (current_digit == buff_index - 1) {
 			// if current position is the last position of the buffer, the whole sequence was proccesed
 			uart_print("End of sequence. Waiting for new number...\r\n");
 		}

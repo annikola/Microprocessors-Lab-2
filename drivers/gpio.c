@@ -255,8 +255,8 @@ void gpio_set_callback(Pin pin, void (*callback)(int status)) {
 		case 15:
 			SYSCFG->EXTICR[3]|= EXTI_port_set;
 			prioritygroup = NVIC_GetPriorityGrouping(); // will return 5
-			priority = NVIC_EncodePriority(prioritygroup, 1, 1 ); // Pri=1 , SubPri=1
-			NVIC_SetPriority(EXTI15_10_IRQn,0);
+			priority = NVIC_EncodePriority(prioritygroup, 1, 1 ); // Pri=1 , SubPri=1 -----> This doesn't apply on our configuration, since NVIC_GetPriorityGrouping() = 0
+			NVIC_SetPriority(EXTI15_10_IRQn,0); // The button has the highest priority
 		  NVIC_EnableIRQ(EXTI15_10_IRQn);
 		break;
 	}
